@@ -17,7 +17,18 @@ embeddings = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
 INDEX_NAME="langgraph-rag-index"
 
 def get_retriever():
-    pass
+    if INDEX_NAME not in pc.list_indexes().names():
+        print(f"Creating new Pinecone index:{INDEX_NAME}")
+        pc.create_index(
+            name=INDEX_NAME,
+            dimension=384,
+            metric="cosine",
+            spec=ServerlessSpec(cloud="aws", region="us-east-1")
+        )
+        print(f"Created new Pinecone index: {INDEX_NAME}")
+
+    vector_store = PineconeVectorStore(index_name=INDEX_NAME, embedding=embeddings)
+    return vector_store.as_retriever()
 
 def add_document_to_vectorstore(text_content:str):
     if not text_content:
